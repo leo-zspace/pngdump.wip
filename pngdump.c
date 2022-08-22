@@ -74,13 +74,13 @@ int main(int argc, const char* argv[]) {
             perror("file not found\n");
         } else {
             /* Parse command line arguments. */
-            for(i = 1; i < argc; i++) {
+            for (i = 1; i < argc; i++) {
                 /* Parser state machine. */
                 switch (currState) {
                     case PS_OPTIONS: {
                         /* Check to see if current command line argument is an option or not
                          * by checking if argument begins with option delimiter.. */
-                        if(strncmp(argv[i], optDelim, strlen(optDelim)) == 0) {
+                        if (strncmp(argv[i], optDelim, strlen(optDelim)) == 0) {
                             /* Current command line argument is an option. */
                             token = strtok(argv[i], optDelim);
                             if (token != null) {
@@ -128,7 +128,7 @@ int main(int argc, const char* argv[]) {
                                 return EXIT_FAILURE;
                             }
                             /* Check ROI y-coordinate. */
-                            if ((roiY > h) || (roiY < 0) ) {
+                            if ((roiY > h) || (roiY < 0)) {
                                 printf("y out of bounds.\n");
                                 return EXIT_FAILURE;
                             }
