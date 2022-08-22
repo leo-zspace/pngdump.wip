@@ -12,22 +12,19 @@
 
 typedef unsigned char byte;
 
-typedef struct OptionEntry
-{
+typedef struct OptionEntry {
     char const *optStr;     /* Command string. */
     char const *argFormat;  /* Command option format. */
     int         numArgs;    /* Number of expected arguments. */
 } OptionEntry_t;
 
-typedef struct CommandEntry
-{
+typedef struct CommandEntry {
     char const *cmdStr;                                             /* Command string. */
     void (*cmdFunc)(const byte* data, int roiX, int roiY, int roiW, int roiH, int w);  /* Command function handler. */
 
 } CommandEntry_t;
 
-typedef enum ParserState
-{
+typedef enum ParserState {
     PS_OPTIONS,   /**< Parse option state. */
     PS_ARGUMENTS  /**< Parser arguments state. */
 
@@ -38,14 +35,12 @@ static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, 
 static int findOption(const char* option);
 static int findCommand(const char* command);
 
-OptionEntry_t OPTION_TABLE[] =
-{
+OptionEntry_t OPTION_TABLE[] = {
     {"roi", "%d,%d:%dx%d", 4},
     {null,  null,          0}  /* End of table indicator. MUST BE LAST!!! */
 };
 
-CommandEntry_t COMMAND_TABLE[] =
-{
+CommandEntry_t COMMAND_TABLE[] = {
     {"dump",      dump     },
     {"histogram", histogram},
     {null,        null     }  /* End of table indicator. MUST BE LAST!!! */
@@ -53,8 +48,7 @@ CommandEntry_t COMMAND_TABLE[] =
 
 const char optDelim[3] = "--\0";
 
-int main(int argc, const char* argv[])
-{
+int main(int argc, const char* argv[]) {
     int r     =  0;  /* Return code. */
     int w     =  0;  /* Image width in pixels.*/
     int h     =  0;  /* Image height in pixels. */
@@ -69,113 +63,82 @@ int main(int argc, const char* argv[])
     byte* data  = null;  /* Pointer to loaded image data. */
     ParserState_t currState = PS_OPTIONS;  /* Current state of parser state machine.  */
     /* Check to see if there are any options to run before proceeding. */
-    if (argc > 1)
-    {
+    if (argc > 1) {
         /* Load image file. */
         data = stbi_load("camera.png", &w, &h, &c, 0);
         //dump(data, 0, 0, w, h, w);
         /* Check that image file loaded correctly. */
-        if (data == null)
-        {
+        if (data == null) {
             /* Error loading image file. Report error and exit. */
             r = errno;
             perror("file not found\n");
-        }
-        else
-        {
+        } else {
             /* Parse command line arguments. */
-            for(i = 1; i < argc; i++)
-            {
+            for(i = 1; i < argc; i++) {
             	/* Parser state machine. */
-                switch (currState)
-                {
-                    case PS_OPTIONS:
-                    {
+                switch (currState) {
+                    case PS_OPTIONS: {
                         /* Check to see if current command line argument is an option or not
                          * by checking if argument begins with option delimiter.. */
-                    	if(strncmp(argv[i], optDelim, strlen(optDelim)) == 0)
-                    	{
+                    	if(strncmp(argv[i], optDelim, strlen(optDelim)) == 0) {
                     		/* Current command line argument is an option. */
 							token = strtok(argv[i], optDelim);
-
-							if (token != null)
-							{
+							if (token != null) {
 								/* Current command line argument is an option.*/
 								index = findOption(token);
-
-								if (index != -1)
-								{
+								if (index != -1) {
 									/* Located option. Check if option requires additional arguments. */
-									if (OPTION_TABLE[index].argFormat != null)
-									{
+									if (OPTION_TABLE[index].argFormat != null) {
 										/* Option requires additional arguments to be parsed. */
 										currState = PS_ARGUMENTS;
 									}
-								}
-								else
-								{
+								} else {
 									/* Option not found. */
 									printf("%s option not supported.\n", token);
 									return EXIT_FAILURE;
 								}
 							}
-                        }
-                        else
-                        {
+                        } else {
                             /* Current command line argument is not an option.
                              * Check if command line argument is a supported command. */
                             index = findCommand(argv[i]);
-
-                            if (index != -1)
-                            {
+                            if (index != -1) {
                                 /* Execute command.*/
                                 COMMAND_TABLE[index].cmdFunc(data, roiX, roiY, roiW, roiH, w);
-                            }
-							else
-							{
+                            } else {
 								/* Command not found. */
 								printf("%s command not supported.\n", argv[i]);
 								return EXIT_FAILURE;
 							}
                         }
-
                         break;
                     }
-                    case PS_ARGUMENTS:
-                    {
+                    case PS_ARGUMENTS: {
                     	/* TODO: Determine a more flexible way for handling different argument formats. */
                     	int retval = sscanf(argv[i], OPTION_TABLE[index].argFormat, &roiX, &roiY, &roiW, &roiH);
                     	/* Check that the expected number of arguments have been parsed.*/
-                    	if (retval != OPTION_TABLE[index].numArgs)
-                    	{
+                    	if (retval != OPTION_TABLE[index].numArgs) {
                     		printf("incorrect number of arguments.");
                     		return EXIT_FAILURE;
-                    	}
-                    	else
-                    	{
+                    	} else {
                     		/* Check that parsed arguments are within bounds of image. */
                     		/* Check ROI x-coordinate. */
-                    		if ((roiX > w) || (roiX < 0))
-                    		{
+                    		if ((roiX > w) || (roiX < 0)) {
                     			printf("x value out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
-
                     		/* Check ROI y-coordinate. */
-                    		if ((roiY > h) || (roiY < 0) )
-                    		{
+                    		if ((roiY > h) || (roiY < 0) ) {
                     			printf("y out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
                     		/* Check ROI width. */
-                    		if (((roiX + roiW) > w) || (roiW < 0))
-                    		{
+                    		if (((roiX + roiW) > w) || (roiW < 0)) {
                     			printf("W out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
                     		/* Check ROI height. */
-                    		if (((roiY + roiH) > h) || (roiH < 0))
-                    		{
+                    		if (((roiY + roiH) > h) || (roiH < 0)) {
                     			printf("H out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
@@ -183,8 +146,7 @@ int main(int argc, const char* argv[])
                     	currState = PS_OPTIONS;
                         break;
                     }
-                    default:
-                    {
+                    default: {
                     	printf("INVALID STATE\n");
                         break;
                     }
@@ -197,8 +159,7 @@ int main(int argc, const char* argv[])
     return r;  /* Exit. */
 }
 
-static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w)
-{
+static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w) {
 	int iX = 0;  /* x-coordinate iterator. */
 	int iY = 0;  /* y-coordinate iterator. */
 	int iD = 0;  /* Data offset. */
@@ -216,81 +177,60 @@ static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w
     }
 }
 
-static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, int w)
-{
+static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, int w) {
 	int iX = 0;  /* x-coordinate iterator. */
 	int iY = 0;  /* y-coordinate iterator. */
 	int iD = 0;  /* Data offset. */
 	int histTable[256] = { 0 };  /* Image histogram data. */
 	/* Traverse region of interest. */
-    for (iY = roiY; iY < (roiY + roiH); iY++)
-    {
-    	for (iX = roiX; iX < (roiX + roiW); iX++)
-        {
+    for (iY = roiY; iY < (roiY + roiH); iY++) {
+    	for (iX = roiX; iX < (roiX + roiW); iX++) {
         	/* Convert 2-dimensional coordinates back into array index. */
             iD = iX + (w * iY);
             histTable[data[iD]]++;
         }
     }
     /* Output */
-    for (iD = 0; iD < NELEMS(histTable) - 1; iD++)
-    {
+    for (iD = 0; iD < NELEMS(histTable) - 1; iD++) {
     	printf("%d, %d\n", iD, histTable[iD]);
     }
     printf("%d, %d\n", iD, histTable[iD]);
 }
 
-static int findOption(const char* option)
-{
+static int findOption(const char* option) {
 	int index = 0; /* Index within option table of found option. */
 	/* Parameter check. */
-	if (option != null)
-	{
-		while (OPTION_TABLE[index].optStr != null)
-		{
-			if (strcmp(option, OPTION_TABLE[index].optStr) == 0)
-			{
+	if (option != null) {
+		while (OPTION_TABLE[index].optStr != null) {
+			if (strcmp(option, OPTION_TABLE[index].optStr) == 0) {
 				/* Located option. */
 				break;
-			}
-			else
-			{
+			} else {
 				/* Test next option string. */
 				index++;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/* Bad parameters. */
 		index = -1;
 	}
-
 	return index;
 }
 
-static int findCommand(const char* command)
-{
+static int findCommand(const char* command) {
 	int index = 0; /* Index within command table of found command. */
 	/* Parameter check. */
-	if (command != null)
-	{
-		while (COMMAND_TABLE[index].cmdStr != null)
-		{
-			if (strcmp(command, COMMAND_TABLE[index].cmdStr) == 0)
-			{
+	if (command != null) {
+		while (COMMAND_TABLE[index].cmdStr != null) {
+			if (strcmp(command, COMMAND_TABLE[index].cmdStr) == 0) {
 				/* Located option. */
 				break;
-			}
-			else
-			{
+			} else {
 				/* Test next command string. */
 				index++;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/* Bad parameters. */
 		index = -1;
 	}
