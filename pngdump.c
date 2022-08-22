@@ -98,7 +98,7 @@ int main(int argc, const char* argv[]) {
                                     }
                                 } else {
                                     /* Option not found. */
-                                    printf("%s option not supported.\n", token);
+                                    fprintf(stderr, "%s option not supported.\n", token);
                                     return EXIT_FAILURE;
                                 }
                             }
@@ -109,7 +109,7 @@ int main(int argc, const char* argv[]) {
                                 COMMAND_TABLE[index].roi(data, roi_x, roi_y, roi_w, roi_h, w);
                             } else {
                                 /* Command not found. */
-                                printf("%s command not supported.\n", argv[i]);
+                                fprintf(stderr, "%s command not supported.\n", argv[i]);
                                 return EXIT_FAILURE;
                             }
                         }
@@ -118,23 +118,23 @@ int main(int argc, const char* argv[]) {
                     case PS_ARGUMENTS: {
                         int retval = sscanf(argv[i], OPTION_TABLE[index].format, &roi_x, &roi_y, &roi_w, &roi_h);
                         if (retval != OPTION_TABLE[index].count) {
-                            printf("incorrect number of arguments.");
+                            fprintf(stderr, "incorrect number of arguments.");
                             return EXIT_FAILURE;
                         } else {
-                            if ((roi_x > w) || (roi_x < 0)) {
-                                printf("x value out of bounds.\n");
+                            if (roi_x > w || roi_x < 0) {
+                                fprintf(stderr, "x value out of bounds.\n");
                                 return EXIT_FAILURE;
                             }
-                            if ((roi_y > h) || (roi_y < 0)) {
-                                printf("y out of bounds.\n");
+                            if (roi_y > h || roi_y < 0) {
+                                fprintf(stderr, "y out of bounds.\n");
                                 return EXIT_FAILURE;
                             }
-                            if (((roi_x + roi_w) > w) || (roi_w < 0)) {
-                                printf("W out of bounds.\n");
+                            if (roi_x + roi_w > w || roi_w <= 0) {
+                                fprintf(stderr, "W out of bounds.\n");
                                 return EXIT_FAILURE;
                             }
-                            if (((roi_y + roi_h) > h) || (roi_h < 0)) {
-                                printf("H out of bounds.\n");
+                            if (roi_y + roi_h > h || roi_h <= 0) {
+                                fprintf(stderr, "H out of bounds.\n");
                                 return EXIT_FAILURE;
                             }
                         }
@@ -142,7 +142,7 @@ int main(int argc, const char* argv[]) {
                         break;
                     }
                     default: {
-                        printf("INVALID STATE\n");
+                        fprintf(stderr, "INVALID STATE\n");
                         break;
                     }
                 }
@@ -157,7 +157,7 @@ static void dump(const byte* data, int x, int y, int w, int h, int stride) {
     printf("(%d,%d) %dx%d\n", x, y, w, h);
     for (int i = y; i < y + h; i++) {
         for (int j = x; j < x + w; j++) {
-            int ix = i + (stride * y);
+            int ix = i * stride + j;
             printf("0x%02X ", data[ix]);
         }
         printf("\n");
@@ -168,7 +168,7 @@ static void histogram(const byte* data, int x, int y, int w, int h, int stride) 
     int histogram[256] = { 0 };
     for (int i = y; i < y + h; i++) {
         for (int j = x; j < x + w; j++) {
-            int ix = i + (stride * y);
+            int ix = i * stride + j;
             histogram[data[ix]]++;
         }
     }
