@@ -7,10 +7,16 @@
 #include "stb_image.h"
 
 #define null NULL
-#define min(a,b) (((a)<(b))?(a):(b))
-#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 
-typedef unsigned char byte;
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef countof
+#define countof(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
+typedef uint8_t byte;
 
 typedef struct OptionEntry {
     char const *optStr;     /* Command string. */
@@ -81,8 +87,13 @@ int main(int argc, const char* argv[]) {
                         /* Check to see if current command line argument is an option or not
                          * by checking if argument begins with option delimiter.. */
                         if (strncmp(argv[i], optDelim, strlen(optDelim)) == 0) {
+                            // TODO: resolve following issues:
+                            // next line is dangerous - it assumes that argv[i] is modifieable
+                            // which is not true on all platforms. strtok also uses globals
+                            // which is not a great practice to begin with... There is a
+                            // a cleaner way then (char*)argv[i] cast. FIXME
                             /* Current command line argument is an option. */
-                            token = strtok(argv[i], optDelim);
+                            token = strtok((char*)argv[i], optDelim);
                             if (token != null) {
                                 /* Current command line argument is an option.*/
                                 index = findOption(token);
@@ -191,7 +202,7 @@ static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, 
         }
     }
     /* Output */
-    for (iD = 0; iD < NELEMS(histTable) - 1; iD++) {
+    for (iD = 0; iD < countof(histTable) - 1; iD++) {
         printf("%d, %d\n", iD, histTable[iD]);
     }
     printf("%d, %d\n", iD, histTable[iD]);
