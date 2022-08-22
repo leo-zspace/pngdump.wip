@@ -1,7 +1,3 @@
-/*#####################################################################
-**  Included Files
-#####################################################################*/
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,26 +6,19 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-/*#####################################################################
-**  Local Defines
-#####################################################################*/
-
 #define null NULL
 #define min(a,b) (((a)<(b))?(a):(b))
 #define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
 
 typedef unsigned char byte;
 
-/* Structure of command table entry. */
 typedef struct OptionEntry
 {
     char const *optStr;     /* Command string. */
     char const *argFormat;  /* Command option format. */
     int         numArgs;    /* Number of expected arguments. */
-
 } OptionEntry_t;
 
-/* Structure of command table entry. */
 typedef struct CommandEntry
 {
     char const *cmdStr;                                             /* Command string. */
@@ -37,7 +26,6 @@ typedef struct CommandEntry
 
 } CommandEntry_t;
 
-/** Enumeration of command line argument parser states. */
 typedef enum ParserState
 {
     PS_OPTIONS,   /**< Parse option state. */
@@ -45,35 +33,17 @@ typedef enum ParserState
 
 } ParserState_t;
 
-
-/*#####################################################################
-**  Private Function Prototypes
-#####################################################################*/
-
 static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w);
 static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, int w);
 static int findOption(const char* option);
 static int findCommand(const char* command);
 
-
-/*#####################################################################
-**  Public Data
-#####################################################################*/
-
-
-/*#####################################################################
-**  Private Data
-#####################################################################*/
-
-/* Table of command line options. */
 OptionEntry_t OPTION_TABLE[] =
 {
     {"roi", "%d,%d:%dx%d", 4},
     {null,  null,          0}  /* End of table indicator. MUST BE LAST!!! */
 };
 
-
-/* Table of command line arguments */
 CommandEntry_t COMMAND_TABLE[] =
 {
     {"dump",      dump     },
@@ -81,25 +51,8 @@ CommandEntry_t COMMAND_TABLE[] =
     {null,        null     }  /* End of table indicator. MUST BE LAST!!! */
 };
 
-/* Option delimiter. */
 const char optDelim[3] = "--\0";
 
-
-/*#####################################################################
-**  Public Functions
-#####################################################################*/
-
-
-/**********************************************************************
- * @brief Main execution.
- *
- * @param [in] argc Number of arguments.
- * @param [in] argv List of arguments.
- *
- * @return Exit code.
- *
- * @note None.
-**********************************************************************/
 int main(int argc, const char* argv[])
 {
     int r     =  0;  /* Return code. */
@@ -112,20 +65,15 @@ int main(int argc, const char* argv[])
     int roiW  =  0;  /* ROI width. */
 	int roiH  =  0;  /* ROI height. */
     int index = -1;  /* Index of found option/command. */
-
     char* token = null;  /* Pointer to string token. */
     byte* data  = null;  /* Pointer to loaded image data. */
-
     ParserState_t currState = PS_OPTIONS;  /* Current state of parser state machine.  */
-
     /* Check to see if there are any options to run before proceeding. */
     if (argc > 1)
     {
         /* Load image file. */
         data = stbi_load("camera.png", &w, &h, &c, 0);
-
         //dump(data, 0, 0, w, h, w);
-
         /* Check that image file loaded correctly. */
         if (data == null)
         {
@@ -193,12 +141,10 @@ int main(int argc, const char* argv[])
 
                         break;
                     }
-
                     case PS_ARGUMENTS:
                     {
                     	/* TODO: Determine a more flexible way for handling different argument formats. */
                     	int retval = sscanf(argv[i], OPTION_TABLE[index].argFormat, &roiX, &roiY, &roiW, &roiH);
-
                     	/* Check that the expected number of arguments have been parsed.*/
                     	if (retval != OPTION_TABLE[index].numArgs)
                     	{
@@ -221,14 +167,12 @@ int main(int argc, const char* argv[])
                     			printf("y out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
-
                     		/* Check ROI width. */
                     		if (((roiX + roiW) > w) || (roiW < 0))
                     		{
                     			printf("W out of bounds.\n");
                     			return EXIT_FAILURE;
                     		}
-
                     		/* Check ROI height. */
                     		if (((roiY + roiH) > h) || (roiH < 0))
                     		{
@@ -236,11 +180,9 @@ int main(int argc, const char* argv[])
                     			return EXIT_FAILURE;
                     		}
                     	}
-
                     	currState = PS_OPTIONS;
                         break;
                     }
-
                     default:
                     {
                     	printf("INVALID STATE\n");
@@ -248,40 +190,19 @@ int main(int argc, const char* argv[])
                     }
                 }
             }
-
             /* Free memory from loaded image file. */
             free(data);
         }
     }
-
     return r;  /* Exit. */
 }
 
-
-/*#####################################################################
-**  Private Functions
-#####################################################################*/
-
-/**********************************************************************
- * @brief Dumps selected raw image data to stdout of region of interest (ROI).
- *
- * @param [in] data Pointer to image data.
- * @param [in] roiX X-coordinate of ROI.
- * @param [in] roiY Y-coordinate of ROI.
- * @param [in] roiW Width of ROI.
- * @param [in] roiH Height of ROI.
- * @param [in] w    Width of image.
- *
- * @note Upper left of image is origin (0,0).
-**********************************************************************/
 static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w)
 {
 	int iX = 0;  /* x-coordinate iterator. */
 	int iY = 0;  /* y-coordinate iterator. */
 	int iD = 0;  /* Data offset. */
-
     printf("(%d,%d) %dx%d\n", roiX, roiY, roiW, roiH);
-
     /* Traverse region of interest. */
     for (iY = roiY; iY < (roiY + roiH); iY++)
     {
@@ -291,31 +212,16 @@ static void dump(const byte* data, int roiX, int roiY, int roiW, int roiH, int w
             iD = iX + (w * iY);
             printf("0x%02X ", data[iD]);
         }
-
         printf("\n");
     }
 }
 
-
-/**********************************************************************
- * @brief Dumps histogram data in CSV format to stdout of region of interest (ROI).
- *
- * @param [in] data Pointer to image data.
- * @param [in] roiX X-coordinate of ROI.
- * @param [in] roiY Y-coordinate of ROI.
- * @param [in] roiW Width of ROI.
- * @param [in] roiH Height of ROI.
- * @param [in] w    Width of image.
- *
- * @note Upper left of image is origin (0,0).
-**********************************************************************/
 static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, int w)
 {
 	int iX = 0;  /* x-coordinate iterator. */
 	int iY = 0;  /* y-coordinate iterator. */
 	int iD = 0;  /* Data offset. */
 	int histTable[256] = { 0 };  /* Image histogram data. */
-
 	/* Traverse region of interest. */
     for (iY = roiY; iY < (roiY + roiH); iY++)
     {
@@ -326,30 +232,17 @@ static void histogram(const byte* data, int roiX, int roiY, int roiW, int roiH, 
             histTable[data[iD]]++;
         }
     }
-
     /* Output */
     for (iD = 0; iD < NELEMS(histTable) - 1; iD++)
     {
     	printf("%d, %d\n", iD, histTable[iD]);
     }
-
     printf("%d, %d\n", iD, histTable[iD]);
 }
 
-
-/**********************************************************************
- * @brief Locates option in supported option table.
- *
- * @param [in] option Option string to locate.
- *
- * @return Index in option table for option. -1 if option cannot be found.
- *
- * @note None.
-**********************************************************************/
 static int findOption(const char* option)
 {
 	int index = 0; /* Index within option table of found option. */
-
 	/* Parameter check. */
 	if (option != null)
 	{
@@ -376,20 +269,9 @@ static int findOption(const char* option)
 	return index;
 }
 
-
-/**********************************************************************
- * @brief Locates command in supported command table.
- *
- * @param [in] command Command string to locate.
- *
- * @return Index in command table for command. -1 if command cannot be found.
- *
- * @note None.
-**********************************************************************/
 static int findCommand(const char* command)
 {
 	int index = 0; /* Index within command table of found command. */
-
 	/* Parameter check. */
 	if (command != null)
 	{
@@ -412,7 +294,5 @@ static int findCommand(const char* command)
 		/* Bad parameters. */
 		index = -1;
 	}
-
 	return index;
 }
-
